@@ -278,3 +278,5 @@ model Notification {
   isRead                Boolean               @default(false)
   createdAt             DateTime              @default(now())
 }
+
+// JSDoc: Prisma models representing ERP assets and workflow schemas.
