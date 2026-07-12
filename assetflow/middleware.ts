@@ -14,7 +14,8 @@ export default auth((req: NextRequest & { auth: { user?: { id: string; role: str
   const isApiRoute = nextUrl.pathname.startsWith("/api/");
   const isAuthRoute = nextUrl.pathname.startsWith("/auth/");
   const isPublicApiRoute =
-    nextUrl.pathname.startsWith("/api/auth/");
+    nextUrl.pathname.startsWith("/api/auth/") ||
+    nextUrl.pathname.startsWith("/api/slack-alert");
 
   // Allow auth API routes always
   if (isPublicApiRoute) return NextResponse.next();

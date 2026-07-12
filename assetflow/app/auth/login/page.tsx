@@ -31,8 +31,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">AssetFlow</h1>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3">AF</div>
+          <h1 className="text-2xl font-bold text-gray-900">AssetFlow - login</h1>
           <p className="text-gray-500 text-sm mt-2">Sign in to your account</p>
         </div>
 
@@ -67,16 +68,32 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="••••••••"
+              placeholder="**********"
             />
           </div>
+          
+          <div className="flex items-center justify-between">
+            <a href="#" className="text-sm text-blue-600 hover:underline">Forgot password?</a>
+          </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            Sign In
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              type="submit"
+              className="w-full bg-gray-100 text-gray-800 font-semibold p-3 rounded-lg hover:bg-gray-200 transition-colors shadow-sm"
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Create Account
+            </button>
+          </div>
+          
+          <div className="mt-4 text-center text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            <p>New here? Sign up creates an employee account; admin roles assigned later.</p>
+          </div>
         </form>
 
         <div className="mt-8 text-center text-sm text-gray-500">
