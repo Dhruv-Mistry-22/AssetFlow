@@ -91,8 +91,8 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className={
-                      user.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                        "bg-destructive/10 text-destructive border-destructive/20"
+                      user.status === "ACTIVE" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)] animate-pulse" :
+                        "bg-destructive/20 text-red-400 border-destructive/40"
                     }>
                       {user.status}
                     </Badge>
