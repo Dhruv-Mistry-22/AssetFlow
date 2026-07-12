@@ -31,7 +31,8 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 rounded-2xl bg-zinc-900/50 border border-white/5 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white flex items-center">
             <Users className="mr-3 h-8 w-8 text-zinc-400" />
