@@ -16,6 +16,8 @@ import {
 } from '../lib/mockData';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   LayoutDashboard,
   Building2,
@@ -250,6 +252,46 @@ export default function AssetFlowApp() {
     XLSX.writeFile(workbook, 'Department_Asset_Allocation_Summary.xlsx');
 
     showToast('Excel Exported', 'Department allocation summary report downloaded.', 'ALERT');
+  };
+
+  // PDF Exporter for Reports Dashboard
+  const handleExportPDF = async () => {
+    const element = document.getElementById('reports-page-content');
+    if (!element) return;
+
+    showToast('Generating PDF', 'Compiling print-ready executive summary PDF...', 'ALERT');
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#020617' // Match bg-slate-950 color exactly
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 190; // A4 margins (10mm left/right)
+      const pageHeight = 277; // A4 margins (10mm top/bottom)
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 10; // Top margin
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('AssetFlow_Reports_Executive_Summary.pdf');
+      showToast('PDF Exported', 'Executive summary report downloaded successfully.', 'ALERT');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      showToast('Export Failed', 'An error occurred during PDF generation.', 'ALERT');
+    }
   };
 
   // Switch demo roles
@@ -1607,74 +1649,86 @@ export default function AssetFlowApp() {
                   <h2 className="text-2xl font-bold tracking-tight">Reports & Insights</h2>
                   <p className="text-xs text-slate-400 mt-1">Export raw reports or review usage, maintenance, and asset statistics.</p>
                 </div>
-                <button
-                  onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-blue-600/10 transition-all"
-                >
-                  <FileSpreadsheet size={14} />
-                  Export Allocations (Excel)
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-blue-600/10 transition-all"
+                  >
+                    <FileSpreadsheet size={14} />
+                    Export Allocations (Excel)
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-purple-600/10 transition-all"
+                  >
+                    <FileDown size={14} />
+                    Export Executive Summary (PDF)
+                  </button>
+                </div>
               </div>
 
-              {/* Metrics visual summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                {/* Utilization list */}
-                <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-4">
-                  <h3 className="font-bold text-sm text-slate-200">Department Asset Counts</h3>
-                  <div className="space-y-3.5">
-                    {departments.map((d) => {
-                      const count = assets.filter((a) => {
-                        const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
-                        return activeAlloc?.departmentId === d.id || 
-                               (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
-                      }).length;
-                      return (
-                        <div key={d.id} className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-slate-300">{d.name}</span>
-                            <span className="text-slate-400">{count} active assets</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                            <div className="bg-blue-500 h-full" style={{ width: `${Math.min(count * 8, 100)}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Most Used & Idle lists */}
-                <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-6">
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Most Booked shared Resources</h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between p-2 rounded bg-slate-900/40">
-                        <span>Conference Room B2</span>
-                        <span className="font-bold text-blue-400">34 Bookings</span>
-                      </div>
-                      <div className="flex justify-between p-2 rounded bg-slate-900/40">
-                        <span>Projector AF-0062</span>
-                        <span className="font-bold text-blue-400">18 Bookings</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Wrap container to export to PDF cleanly */}
+              <div id="reports-page-content" className="p-6 bg-slate-950 rounded-2xl border border-slate-800 space-y-8">
+                {/* Metrics visual summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Flagged Idle Assets (60+ days unused)</h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
-                        <span>Camera AF-0301</span>
-                        <span className="font-bold text-yellow-400">60 days idle</span>
+                  {/* Utilization list */}
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-4">
+                    <h3 className="font-bold text-sm text-slate-200">Department Asset Counts</h3>
+                    <div className="space-y-3.5">
+                      {departments.map((d) => {
+                        const count = assets.filter((a) => {
+                          const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
+                          return activeAlloc?.departmentId === d.id || 
+                                 (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
+                        }).length;
+                        return (
+                          <div key={d.id} className="space-y-1.5">
+                            <div className="flex justify-between text-xs font-semibold">
+                              <span className="text-slate-300">{d.name}</span>
+                              <span className="text-slate-400">{count} active assets</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                              <div className="bg-blue-500 h-full" style={{ width: `${Math.min(count * 8, 100)}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Most Used & Idle lists */}
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-6">
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Most Booked shared Resources</h4>
+                      <div className="text-xs space-y-2 text-slate-300">
+                        <div className="flex justify-between p-2 rounded bg-slate-900/40">
+                          <span>Conference Room B2</span>
+                          <span className="font-bold text-blue-400">34 Bookings</span>
+                        </div>
+                        <div className="flex justify-between p-2 rounded bg-slate-900/40">
+                          <span>Projector AF-0062</span>
+                          <span className="font-bold text-blue-400">18 Bookings</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
-                        <span>Ergonomic Chair AF-0410</span>
-                        <span className="font-bold text-yellow-400">45 days idle</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Flagged Idle Assets (60+ days unused)</h4>
+                      <div className="text-xs space-y-2 text-slate-300">
+                        <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
+                          <span>Camera AF-0301</span>
+                          <span className="font-bold text-yellow-400">60 days idle</span>
+                        </div>
+                        <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
+                          <span>Ergonomic Chair AF-0410</span>
+                          <span className="font-bold text-yellow-400">45 days idle</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
+                </div>
               </div>
             </div>
           )}
