@@ -81,10 +81,10 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
                   <TableCell className="text-muted-foreground">{user.department || "N/A"}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={
-                      user.role === "ADMIN" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                        user.role === "ASSET_MANAGER" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                          user.role === "DEPARTMENT_HEAD" ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
-                            "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                      user.role === "ADMIN" ? "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]" :
+                        user.role === "ASSET_MANAGER" ? "bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.1)]" :
+                          user.role === "DEPARTMENT_HEAD" ? "bg-purple-500/20 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.1)]" :
+                            "bg-zinc-500/20 text-zinc-300 border-zinc-500/30"
                     }>
                       {user.role.replace("_", " ")}
                     </Badge>
