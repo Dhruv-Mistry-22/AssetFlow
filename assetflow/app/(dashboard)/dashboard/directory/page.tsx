@@ -50,7 +50,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 bg-black/20 p-2 rounded-xl border border-white/5">
         <SearchInput placeholder="Search users by name, email, or department..." />
       </div>
 
