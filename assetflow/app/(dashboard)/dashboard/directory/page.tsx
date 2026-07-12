@@ -55,7 +55,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
       </div>
 
       {/* Glassmorphic Table */}
-      <div className="glass-card rounded-xl border border-white/5 overflow-hidden">
+      <div className="glass-card rounded-2xl border border-white/10 shadow-2xl overflow-hidden backdrop-blur-xl">
         <Table>
           <TableHeader className="bg-black/20">
             <TableRow className="border-white/5 hover:bg-transparent">
