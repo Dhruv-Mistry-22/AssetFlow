@@ -645,7 +645,8 @@ export default function AssetFlowApp() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.1 }}
               className="h-full relative"
             >
-              <div className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]">
+              {/* Immersive 3D Background */}
+              <div className="absolute inset-0 z-0 overflow-hidden">
                 <Background3D />
               </div>
               
@@ -660,9 +661,9 @@ export default function AssetFlowApp() {
 
                   <div className="space-y-6 pt-10">
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="p-6 rounded-3xl bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] cursor-pointer w-[80%]"
+                      initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 15 }}
+                      whileHover={{ scale: 1.04, y: -4, boxShadow: '0 30px 60px -15px rgba(249, 115, 22, 0.15)' }}
+                      className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/50 cursor-pointer w-[80%] transition-shadow"
                     >
                       <div className="flex justify-between items-start mb-6">
                         <p className="text-sm text-slate-700 font-bold">Total Orders</p>
@@ -680,9 +681,9 @@ export default function AssetFlowApp() {
                     </motion.div>
 
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="p-6 rounded-3xl bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] cursor-pointer w-[80%]"
+                      initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, type: 'spring', stiffness: 100, damping: 15 }}
+                      whileHover={{ scale: 1.04, y: -4, boxShadow: '0 30px 60px -15px rgba(249, 115, 22, 0.15)' }}
+                      className="p-6 rounded-3xl bg-white/70 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/50 cursor-pointer w-[80%] transition-shadow"
                     >
                       <div className="flex justify-between items-start mb-6">
                         <p className="text-sm text-slate-700 font-bold">Inventory Value</p>
@@ -704,8 +705,9 @@ export default function AssetFlowApp() {
                 {/* RIGHT COLUMN: The Floating Total Revenue Card */}
                 <div className="lg:col-span-8 relative">
                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.9, rotate: 2 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: 'spring' }}
-                      className="absolute right-10 top-40 p-6 rounded-3xl bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgb(0,0,0,0.08)] border border-slate-100 w-80 z-20"
+                      initial={{ opacity: 0, scale: 0.85, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.6, type: 'spring', stiffness: 80, damping: 12 }}
+                      whileHover={{ scale: 1.03, boxShadow: '0 40px 80px -20px rgba(249, 115, 22, 0.2)' }}
+                      className="absolute right-10 top-40 p-6 rounded-3xl bg-white/80 backdrop-blur-2xl shadow-[0_20px_50px_rgb(0,0,0,0.1)] border border-white/60 w-80 z-20 transition-shadow cursor-pointer"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <p className="text-sm text-slate-700 font-bold">Total Revenue</p>
@@ -724,8 +726,9 @@ export default function AssetFlowApp() {
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12 pb-10 max-w-[1600px] mx-auto">
                  {/* Weekly Sales */}
                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-                    className="lg:col-span-5 p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] flex flex-col"
+                    initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, type: 'spring', stiffness: 80, damping: 15 }}
+                    whileHover={{ y: -4, boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.12)' }}
+                    className="lg:col-span-5 p-8 rounded-[2rem] bg-white/80 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/60 flex flex-col transition-shadow cursor-pointer"
                  >
                     <div className="flex justify-between items-start mb-8">
                       <div>
@@ -742,8 +745,9 @@ export default function AssetFlowApp() {
                  {/* Alerts & Campaigns */}
                  <div className="lg:col-span-3 space-y-8 flex flex-col">
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-                      className="p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] flex-1 relative overflow-hidden"
+                      initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, type: 'spring', stiffness: 80, damping: 15 }}
+                      whileHover={{ y: -4, boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.12)' }}
+                      className="p-8 rounded-[2rem] bg-white/80 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/60 flex-1 relative overflow-hidden transition-shadow cursor-pointer"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-bold text-sm text-slate-800">Alerts</h3>
@@ -767,8 +771,9 @@ export default function AssetFlowApp() {
                     </motion.div>
 
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-                      className="p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)]"
+                      initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, type: 'spring', stiffness: 80, damping: 15 }}
+                      whileHover={{ y: -4, boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.12)' }}
+                      className="p-8 rounded-[2rem] bg-white/80 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/60 transition-shadow cursor-pointer"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <h3 className="font-bold text-sm text-slate-800">Campaigns</h3>
@@ -786,8 +791,9 @@ export default function AssetFlowApp() {
 
                  {/* Best Selling Products / Active Assets */}
                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
-                    className="lg:col-span-4 p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)]"
+                    initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, type: 'spring', stiffness: 80, damping: 15 }}
+                    whileHover={{ y: -4, boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.12)' }}
+                    className="lg:col-span-4 p-8 rounded-[2rem] bg-white/80 backdrop-blur-2xl shadow-[0_8px_32px_rgb(0,0,0,0.06)] border border-white/60 transition-shadow cursor-pointer"
                  >
                     <div className="flex justify-between items-start mb-8">
                       <h3 className="font-bold text-sm text-slate-800">Most Active Assets</h3>
