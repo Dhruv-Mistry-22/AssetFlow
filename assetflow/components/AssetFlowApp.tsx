@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { signOut } from 'next-auth/react';
 import { useAppState } from '../context/StateContext';
 import { 
   seedUsers, 
@@ -737,6 +738,13 @@ export default function AssetFlowApp() {
                 <p className="text-xs font-semibold text-slate-200 leading-tight">{currentUser?.name}</p>
                 <p className="text-[10px] text-slate-500 font-medium">{currentUser?.role.replace('_', ' ')}</p>
               </div>
+              <button 
+                onClick={() => signOut({ callbackUrl: "/" })} 
+                className="ml-3 p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                title="Log Out"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
         </header>

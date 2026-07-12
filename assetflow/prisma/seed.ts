@@ -34,6 +34,8 @@ async function main() {
   const sana = await prisma.user.create({ data: { name: "Sana Iqbal", email: "sana@assetflow.com", passwordHash: hash, role: "DEPARTMENT_HEAD", department: fieldOpsEast.name } });
   await prisma.department.update({ where: { id: fieldOpsEast.id }, data: { headOfDepartmentId: sana.id } });
 
+  const manager = await prisma.user.create({ data: { name: "Sarah Manager", email: "sarah@assetflow.com", passwordHash: hash, role: "ASSET_MANAGER", department: facilities.name } });
+
   const priya = await prisma.user.create({ data: { name: "Priya Shah", email: "priya@assetflow.com", passwordHash: hash, role: "EMPLOYEE", department: it.name } });
   const john = await prisma.user.create({ data: { name: "John Doe", email: "john@assetflow.com", passwordHash: hash, role: "EMPLOYEE", department: hr.name } });
 
