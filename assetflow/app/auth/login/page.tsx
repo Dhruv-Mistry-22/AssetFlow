@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { LoginForm } from "./login-form";
-import { ShieldCheck, Server, Activity } from "lucide-react";
+import { Server } from "lucide-react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
@@ -16,72 +16,35 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background">
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/30 blur-[150px] animate-pulse duration-1000" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-500/20 blur-[150px]" />
-        <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-purple-500/20 blur-[120px] animate-pulse" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] mix-blend-overlay" />
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-zinc-950">
+      {/* Massive ambient glow background */}
+      <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none flex items-center justify-center">
+        <div className="absolute w-[800px] h-[800px] rounded-full bg-gradient-to-r from-blue-600/20 to-purple-600/20 blur-[120px] animate-pulse duration-3000" />
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-emerald-500/10 to-transparent blur-[100px] animate-spin-slow mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.08] mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#09090b_100%)]" />
       </div>
 
-      <div className="container relative z-10 flex h-[800px] w-full flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-        
-        {/* Left Side: Branding/Hero */}
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r dark:border-white/10 lg:flex overflow-hidden">
-          <div className="absolute inset-0 bg-zinc-900" />
+      <div className="relative z-10 w-full max-w-md px-6">
+        <div className="glass-card p-10 rounded-3xl relative overflow-hidden border border-white/10 shadow-[0_0_50px_0_rgba(0,0,0,0.5)] backdrop-blur-3xl transform hover:scale-[1.01] transition-transform duration-500">
+          {/* Accent glow on top */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-primary to-emerald-500" />
           
-          {/* Subtle animated grid background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-          
-          <div className="relative z-20 flex items-center text-3xl font-bold tracking-tight mb-8">
-            <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/30">
-              <Server className="h-6 w-6 text-white" />
+          <div className="flex flex-col items-center space-y-6 text-center mb-10">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-600 shadow-[0_0_30px_rgba(59,130,246,0.5)]">
+              <Server className="h-8 w-8 text-white" />
             </div>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">AssetFlow</span> <span className="font-light text-primary ml-2">Pro</span>
-          </div>
-
-          <div className="relative z-20 mt-auto mb-10">
-            <blockquote className="space-y-4">
-              <p className="text-3xl font-medium leading-tight">
-                "Intelligent asset management, zero double-allocations, and seamless booking conflict resolution in one cohesive platform."
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 mb-2">
+                AssetFlow <span className="font-light text-primary">Pro</span>
+              </h1>
+              <p className="text-sm text-zinc-400 font-medium">
+                Enterprise Resource Command Center
               </p>
-              <footer className="flex items-center space-x-3 text-muted-foreground text-sm">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                <span>Enterprise-Grade Security & Validation</span>
-              </footer>
-            </blockquote>
-          </div>
-        </div>
-
-        {/* Right Side: Login Form (Glassmorphic) */}
-        <div className="lg:p-8 w-full flex justify-center">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[450px]">
-            
-            {/* Mobile Header (Hidden on Desktop) */}
-            <div className="flex flex-col items-center space-y-2 lg:hidden mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20">
-                <Server className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight">AssetFlow</h1>
-            </div>
-
-            <div className="glass-card p-10 rounded-3xl relative overflow-hidden border border-white/10 shadow-[0_8px_32px_0_rgba(255,255,255,0.05)] backdrop-blur-2xl">
-              {/* Subtle accent line on top of card */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-primary to-purple-500 opacity-80" />
-              
-              <div className="flex flex-col space-y-2 text-center mb-8">
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground flex items-center justify-center">
-                  Sign In
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Enter your corporate credentials to access the portal.
-                </p>
-              </div>
-
-              <LoginForm />
             </div>
           </div>
+
+          <LoginForm />
         </div>
       </div>
     </div>
