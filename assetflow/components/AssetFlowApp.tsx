@@ -15,7 +15,9 @@ import {
   AuditItem 
 } from '../lib/mockData';
 import QRCode from 'qrcode';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   LayoutDashboard,
   Building2,
@@ -223,8 +225,8 @@ export default function AssetFlowApp() {
     document.body.removeChild(link);
   };
 
-  // CSV Exporter for Department Allocation Summary
-  const handleExportCSV = () => {
+  // Excel Exporter for Department Allocation Summary
+  const handleExportExcel = () => {
     // Generate allocation summary per department
     const summaryData = departments.map((d) => {
       const deptAssets = assets.filter((a) => {
@@ -244,17 +246,114 @@ export default function AssetFlowApp() {
       };
     });
 
-    const csv = Papa.unparse(summaryData);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'Department_Asset_Allocation_Summary.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(summaryData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Department Allocation');
+    XLSX.writeFile(workbook, 'Department_Asset_Allocation_Summary.xlsx');
 
-    showToast('CSV Exported', 'Department allocation summary report downloaded.', 'ALERT');
+    showToast('Excel Exported', 'Department allocation summary report downloaded.', 'ALERT');
+  };
+
+  // PDF Exporter for Reports Dashboard using programmatic jspdf-autotable
+  const handleExportPDF = () => {
+    // Gather same department summary data
+    const summaryData = departments.map((d) => {
+      const deptAssets = assets.filter((a) => {
+        const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
+        return activeAlloc?.departmentId === d.id || 
+               (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
+      });
+
+      const totalCost = deptAssets.reduce((sum, a) => sum + a.acquisitionCost, 0);
+
+      return {
+        name: d.name,
+        status: d.status,
+        head: d.headName || 'Not Assigned',
+        count: deptAssets.length,
+        cost: totalCost
+      };
+    });
+
+    // Initialize jsPDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // Document Branding & Header
+    pdf.setFillColor(15, 23, 42); // bg-slate-900 (#0f172a)
+    pdf.rect(0, 0, 210, 40, 'F');
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(22);
+    pdf.text('AssetFlow ERP System', 14, 18);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text('EXECUTIVE REPORTS CENTER', 14, 25);
+    pdf.text(`Date Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+    // Report Metadata Title
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.text('Department Asset Allocation Summary', 14, 52);
+
+    // Draw a thin accent line
+    pdf.setDrawColor(226, 232, 240); // border-slate-200
+    pdf.line(14, 55, 196, 55);
+
+    // Draw the vector Table using jspdf-autotable
+    const tableHeaders = [['Department Name', 'Status', 'Head of Department', 'Allocated Assets Count', 'Total Cost of Assets']];
+    const tableRows = summaryData.map(d => [
+      d.name,
+      d.status,
+      d.head,
+      d.count.toString(),
+      `$${d.cost.toLocaleString()}`
+    ]);
+
+    // Add summary row
+    const totalCount = summaryData.reduce((sum, d) => sum + d.count, 0);
+    const totalCostSum = summaryData.reduce((sum, d) => sum + d.cost, 0);
+    tableRows.push([
+      'TOTAL SUMMARY',
+      '-',
+      '-',
+      totalCount.toString(),
+      `$${totalCostSum.toLocaleString()}`
+    ]);
+
+    autoTable(pdf, {
+      startY: 60,
+      head: tableHeaders,
+      body: tableRows,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        3: { halign: 'right' }, // count
+        4: { halign: 'right' }  // cost
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4
+      },
+      didParseCell: (data: any) => {
+        // Highlight totals row
+        if (data.row.index === tableRows.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [241, 245, 249]; // bg-slate-100
+        }
+      }
+    });
+
+    // Save the document
+    pdf.save('AssetFlow_Department_Allocation_Summary.pdf');
+    showToast('PDF Exported', 'Department allocation summary report downloaded.', 'ALERT');
   };
 
   // Switch demo roles
@@ -1612,74 +1711,86 @@ export default function AssetFlowApp() {
                   <h2 className="text-2xl font-bold tracking-tight">Reports & Insights</h2>
                   <p className="text-xs text-slate-400 mt-1">Export raw reports or review usage, maintenance, and asset statistics.</p>
                 </div>
-                <button
-                  onClick={handleExportCSV}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-blue-600/10 transition-all"
-                >
-                  <FileSpreadsheet size={14} />
-                  Export Allocations Summary
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-blue-600/10 transition-all"
+                  >
+                    <FileSpreadsheet size={14} />
+                    Export Allocations (Excel)
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-purple-600/10 transition-all"
+                  >
+                    <FileDown size={14} />
+                    Export Executive Summary (PDF)
+                  </button>
+                </div>
               </div>
 
-              {/* Metrics visual summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                {/* Utilization list */}
-                <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-4">
-                  <h3 className="font-bold text-sm text-slate-200">Department Asset Counts</h3>
-                  <div className="space-y-3.5">
-                    {departments.map((d) => {
-                      const count = assets.filter((a) => {
-                        const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
-                        return activeAlloc?.departmentId === d.id || 
-                               (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
-                      }).length;
-                      return (
-                        <div key={d.id} className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-slate-300">{d.name}</span>
-                            <span className="text-slate-400">{count} active assets</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                            <div className="bg-blue-500 h-full" style={{ width: `${Math.min(count * 8, 100)}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Most Used & Idle lists */}
-                <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-6">
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Most Booked shared Resources</h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between p-2 rounded bg-slate-900/40">
-                        <span>Conference Room B2</span>
-                        <span className="font-bold text-blue-400">34 Bookings</span>
-                      </div>
-                      <div className="flex justify-between p-2 rounded bg-slate-900/40">
-                        <span>Projector AF-0062</span>
-                        <span className="font-bold text-blue-400">18 Bookings</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Wrap container to export to PDF cleanly */}
+              <div id="reports-page-content" className="p-6 bg-slate-950 rounded-2xl border border-slate-800 space-y-8">
+                {/* Metrics visual summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Flagged Idle Assets (60+ days unused)</h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
-                        <span>Camera AF-0301</span>
-                        <span className="font-bold text-yellow-400">60 days idle</span>
+                  {/* Utilization list */}
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-4">
+                    <h3 className="font-bold text-sm text-slate-200">Department Asset Counts</h3>
+                    <div className="space-y-3.5">
+                      {departments.map((d) => {
+                        const count = assets.filter((a) => {
+                          const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
+                          return activeAlloc?.departmentId === d.id || 
+                                 (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
+                        }).length;
+                        return (
+                          <div key={d.id} className="space-y-1.5">
+                            <div className="flex justify-between text-xs font-semibold">
+                              <span className="text-slate-300">{d.name}</span>
+                              <span className="text-slate-400">{count} active assets</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                              <div className="bg-blue-500 h-full" style={{ width: `${Math.min(count * 8, 100)}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Most Used & Idle lists */}
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/10 space-y-6">
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Most Booked shared Resources</h4>
+                      <div className="text-xs space-y-2 text-slate-300">
+                        <div className="flex justify-between p-2 rounded bg-slate-900/40">
+                          <span>Conference Room B2</span>
+                          <span className="font-bold text-blue-400">34 Bookings</span>
+                        </div>
+                        <div className="flex justify-between p-2 rounded bg-slate-900/40">
+                          <span>Projector AF-0062</span>
+                          <span className="font-bold text-blue-400">18 Bookings</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
-                        <span>Ergonomic Chair AF-0410</span>
-                        <span className="font-bold text-yellow-400">45 days idle</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-xs text-slate-200 uppercase tracking-widest text-slate-400">Flagged Idle Assets (60+ days unused)</h4>
+                      <div className="text-xs space-y-2 text-slate-300">
+                        <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
+                          <span>Camera AF-0301</span>
+                          <span className="font-bold text-yellow-400">60 days idle</span>
+                        </div>
+                        <div className="flex justify-between p-2 rounded border border-yellow-500/20 bg-yellow-500/5">
+                          <span>Ergonomic Chair AF-0410</span>
+                          <span className="font-bold text-yellow-400">45 days idle</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
+                </div>
               </div>
             </div>
           )}
@@ -2413,3 +2524,5 @@ export default function AssetFlowApp() {
     </div>
   );
 }
+
+// JSDoc: Main layout rendering and conflict UX modal coordination.

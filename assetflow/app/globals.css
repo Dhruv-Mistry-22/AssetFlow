@@ -24,3 +24,57 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  /* Hide the sidebar, the top nav header, buttons, and simulation role bar */
+  aside,
+  header,
+  nav,
+  button,
+  .no-print,
+  .demo-role-switcher {
+    display: none !important;
+  }
+
+  /* Reset body and container backgrounds for printing */
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Target the wrapped reports content to fit the full A4 width */
+  #reports-page-content {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Text readability adjustments for white page printout */
+  h1, h2, h3, h4, span, p, td, th {
+    color: #000000 !important;
+  }
+  
+  /* Make sure charts and grids have clean borders instead of raw backgrounds */
+  .grid {
+    grid-template-columns: 1fr !important; /* Stack elements for clean list layout */
+    gap: 1.5rem !important;
+  }
+  
+  .border, div {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Keep table text dark */
+  td, th {
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+}
