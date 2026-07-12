@@ -1,0 +1,38 @@
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+yarn-error.log*
+AssetFlow - Enterprise Asset & Resource Management System - 8 hours.excalidraw
+/node_modules
+*.tsbuildinfo
+# next.js
+# misc
+# testing
+# production
+/build
+.pnpm-debug.log*
+AssetFlow problem statement.pdfAssetFlow problem statement.pdf
+/.next/
+.vercel
+# env files (can opt-in for committing if needed)
+.env*
+# debug
+# dependencies
+/.pnp
+yarn-debug.log*
+.pnp.*
+*.pem
+.DS_Store
+# vercel
+!.yarn/releases
+!.yarn/versions
+AssetFlow_Master_Document.md
+next-env.d.ts
+/coverage
+!.yarn/plugins
+npm-debug.log*
+# typescript
+/out/
+.yarn/*
+!.yarn/patches
+
+/src/generated/prisma

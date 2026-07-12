@@ -129,11 +129,23 @@ To match the exact visual design and copy outlined in `AssetFlow - Enterprise As
   * `1h ago` ➔ *Booking confirmed: Room B2 (2:00 to 3:00 PM)*
   * `3h ago` ➔ *Transfer approved: AF-0033 to Facilities dept*
   * `1d ago` ➔ *Overdue return: AF-0021 was due 3 days ago*
-  * `2d ago` ➔ *Audit discrepancy flagged: AF-0088 damaged*
+---
+
+## ✨ 3. Extra Differentiator Features (Implemented)
+To set this project apart for the hackathon, we implemented five high-value features:
+
+* **QR Code Labels**: Generates scan-ready labels in asset directory pop-ups using the `qrcode` package with a **"Download Label Image"** action.
+* **Audit Cycle Verification status**: Close Cycle locks cycles, flags discrepancies, and transitions missing assets to `Lost` in the main database.
+* **CSV Export**: Downloads a department allocation summary report as `Department_Asset_Allocation_Summary.csv` via `papaparse`.
+* **Polished Conflict UX**: Blocks double-allocations, displaying a dedicated modal showing the current holder (name, department) with a **one-click "Trigger Transfer Request"** button.
+* **Smart Booking Recommendation Algorithm**: If a user encounters an overlap conflict when booking a resource (e.g. Room B2), our algorithm analyzes availability and suggests:
+  1. The **closest available time slot** (same duration) for the *same* resource.
+  2. Alternative similar resources (same category) that are **available during the exact requested time range**!
+* **Slack Integration & Redis Rate Limiter**: Triggers automated Slack alerts when critical events occur (e.g., critical maintenance ticket raised or assets marked missing). Includes a **sliding-window rate-limiter** using serverless **Upstash Redis** to buffer and throttle notifications (max 5 alerts/minute) to respect Slack webhook rate limits.
 
 ---
 
-## 💾 3. Export Reporting Details: Excel & PDF
+## 💾 4. Export Reporting Details: Excel & PDF
 
 To support organizational planning, audit compliance, and accounting, the system features dedicated Excel and PDF export pipelines, optimized for a client-side SPA architecture.
 
@@ -174,7 +186,7 @@ Since we are building a 100% self-contained frontend application:
 
 ---
 
-## 🌳 4. Implementation Steps
+## 🌳 5. Implementation Steps
 
 ```mermaid
 graph TD
