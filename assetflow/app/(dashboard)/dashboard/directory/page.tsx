@@ -75,7 +75,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id} className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
+                <TableRow key={user.id} className="border-white/5 hover:bg-white/10 hover:shadow-md hover:scale-[1.01] cursor-pointer transition-all duration-300">
                   <TableCell className="font-medium text-white">{user.name}</TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell className="text-muted-foreground">{user.department || "N/A"}</TableCell>
