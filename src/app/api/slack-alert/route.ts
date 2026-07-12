@@ -116,3 +116,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// JSDoc: Next.js API Route handling one-way Slack webhook notifications with rate limiting.
