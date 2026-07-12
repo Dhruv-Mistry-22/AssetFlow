@@ -15,7 +15,7 @@ import {
   AuditItem 
 } from '../lib/mockData';
 import QRCode from 'qrcode';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import {
   LayoutDashboard,
   Building2,
@@ -223,8 +223,8 @@ export default function AssetFlowApp() {
     document.body.removeChild(link);
   };
 
-  // CSV Exporter for Department Allocation Summary
-  const handleExportCSV = () => {
+  // Excel Exporter for Department Allocation Summary
+  const handleExportExcel = () => {
     // Generate allocation summary per department
     const summaryData = departments.map((d) => {
       const deptAssets = assets.filter((a) => {
@@ -244,17 +244,12 @@ export default function AssetFlowApp() {
       };
     });
 
-    const csv = Papa.unparse(summaryData);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'Department_Asset_Allocation_Summary.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(summaryData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Department Allocation');
+    XLSX.writeFile(workbook, 'Department_Asset_Allocation_Summary.xlsx');
 
-    showToast('CSV Exported', 'Department allocation summary report downloaded.', 'ALERT');
+    showToast('Excel Exported', 'Department allocation summary report downloaded.', 'ALERT');
   };
 
   // Switch demo roles
@@ -1613,11 +1608,11 @@ export default function AssetFlowApp() {
                   <p className="text-xs text-slate-400 mt-1">Export raw reports or review usage, maintenance, and asset statistics.</p>
                 </div>
                 <button
-                  onClick={handleExportCSV}
+                  onClick={handleExportExcel}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 font-semibold text-xs text-white rounded-lg shadow-lg shadow-blue-600/10 transition-all"
                 >
                   <FileSpreadsheet size={14} />
-                  Export Allocations Summary
+                  Export Allocations (Excel)
                 </button>
               </div>
 

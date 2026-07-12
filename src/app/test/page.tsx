@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { StateProvider, useAppState } from '../../context/StateContext';
 import QRCode from 'qrcode';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { Asset } from '../../lib/mockData';
 import { FileDown, CheckCircle2, X } from 'lucide-react';
 
@@ -137,9 +137,9 @@ function MinimalTestUI() {
   };
 
   // ==========================================
-  // TEST ACTION 3: CSV Export Papaparse
+  // TEST ACTION 3: Excel Export
   // ==========================================
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     // Create simple data structured list
     const summaryData = assets.map(a => ({
       'Asset Tag': a.assetTag,
@@ -151,15 +151,10 @@ function MinimalTestUI() {
       'Current Status': a.status
     }));
 
-    const csv = Papa.unparse(summaryData);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'Black_Box_Test_Asset_Export.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(summaryData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Asset Export');
+    XLSX.writeFile(workbook, 'Black_Box_Test_Asset_Export.xlsx');
   };
 
   // ==========================================
@@ -410,9 +405,9 @@ function MinimalTestUI() {
           <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
             <h3 className="text-sm font-bold text-purple-400 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-              3. CSV Export
+              3. Excel Export
             </h3>
-            <p className="text-xs text-slate-400">Compiles local asset states and triggers structured CSV spreadsheets download.</p>
+            <p className="text-xs text-slate-400">Compiles local asset states and triggers structured binary Excel (.xlsx) download.</p>
 
             <div className="space-y-3">
               <div className="p-4 rounded bg-slate-950 border border-slate-800 space-y-2 text-xs">
@@ -420,16 +415,16 @@ function MinimalTestUI() {
                 <ul className="space-y-1 text-slate-400 pl-2 list-disc">
                   <li>Total records parsed: {assets.length} items</li>
                   <li>Columns mapped: 7 headers</li>
-                  <li>Encoding: UTF-8</li>
+                  <li>Format: Microsoft Excel (.xlsx)</li>
                 </ul>
               </div>
 
               <button
-                onClick={handleExportCSV}
+                onClick={handleExportExcel}
                 className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-xs font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
               >
                 <FileDown size={14} />
-                Download test_assets.csv
+                Download test_assets.xlsx
               </button>
             </div>
           </div>
