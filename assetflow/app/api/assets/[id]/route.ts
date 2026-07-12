@@ -86,10 +86,7 @@ export async function PUT(
     const parsed = updateAssetSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
 
     const existing = await db.asset.findUnique({ where: { id } });

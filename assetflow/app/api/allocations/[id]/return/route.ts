@@ -30,10 +30,7 @@ export async function POST(
     const body = await request.json();
     const parsed = returnAssetSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
     const { returnCondition, returnNotes } = parsed.data;
 

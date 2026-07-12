@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createCategorySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
 
     const category = await db.assetCategory.create({

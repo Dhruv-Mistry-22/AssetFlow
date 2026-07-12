@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const parsed = createDepartmentSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
+        { error: "Validation failed", details: parsed.error.issues },
         { status: 400 }
       );
     }
@@ -114,7 +114,7 @@ export async function PATCH(request: NextRequest) {
     const parsed = updateDepartmentSchema.safeParse(rest);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
+        { error: "Validation failed", details: parsed.error.issues },
         { status: 400 }
       );
     }

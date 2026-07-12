@@ -89,10 +89,7 @@ export async function POST(request: NextRequest) {
     const parsed = createBookingSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
 
     const { assetId, startTime: startStr, endTime: endStr, purpose, location } =

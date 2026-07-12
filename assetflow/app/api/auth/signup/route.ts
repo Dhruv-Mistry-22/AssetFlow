@@ -14,10 +14,7 @@ export async function POST(request: NextRequest) {
     const parsed = signupSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
 
     const { name, email, password, department } = parsed.data;
