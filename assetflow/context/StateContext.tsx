@@ -45,7 +45,7 @@ interface StateContextType {
   
   // Actions
   promoteEmployee: (userId: string, role: User['role'], deptId?: string) => void;
-  registerAsset: (data: Omit<Asset, 'id' | 'assetTag' | 'status' | 'categoryName'>) => Asset;
+  registerAsset: (data: Omit<Asset, 'id' | 'assetTag' | 'status' | 'categoryName'>) => Promise<Asset>;
   allocateAsset: (
     assetId: string,
     userId: string | null,
@@ -704,7 +704,7 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
           cost: cost !== undefined ? cost : r.cost,
           technicianId: techId || r.technicianId,
           technicianName: technician ? technician.name : r.technicianName,
-          resolvedAt: status === 'COMPLETED' || status === 'RESOLVED' ? new Date().toISOString().split('T')[0] : r.resolvedAt,
+          resolvedAt: status === 'RESOLVED' ? new Date().toISOString().split('T')[0] : r.resolvedAt,
         };
       }
       return r;
@@ -715,7 +715,7 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
       if (a.id === request.assetId) {
         if (status === 'APPROVED' || status === 'IN_PROGRESS') {
           return { ...a, status: 'Under_Maintenance' as const };
-        } else if (status === 'COMPLETED' || status === 'RESOLVED') {
+        } else if (status === 'RESOLVED') {
           return { ...a, status: 'Available' as const }; // Reverts to Available on resolution
         }
       }

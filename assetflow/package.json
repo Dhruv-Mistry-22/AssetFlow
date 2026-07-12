@@ -18,8 +18,12 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^5.14.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@types/three": "^0.185.1",
     "@upstash/redis": "^1.38.0",
     "bcryptjs": "^3.0.3",
+    "framer-motion": "^12.42.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.24.0",
@@ -30,6 +34,8 @@
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "recharts": "^3.9.2",
+    "three": "^0.185.1",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
