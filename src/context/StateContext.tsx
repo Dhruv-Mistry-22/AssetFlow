@@ -964,3 +964,5 @@ export function useAppState() {
   }
   return context;
 }
+
+// JSDoc: StateContext coordinates the smart booking recommendations algorithm.
