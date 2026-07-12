@@ -2413,3 +2413,5 @@ export default function AssetFlowApp() {
     </div>
   );
 }
+
+// JSDoc: Main layout rendering and conflict UX modal coordination.
