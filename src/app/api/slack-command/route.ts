@@ -149,3 +149,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// JSDoc: Next.js API Route handling Slack slash command queries.
