@@ -5,7 +5,7 @@ import { signOut } from 'next-auth/react';
 import { useAppState } from '../context/StateContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Background3D from './Background3D';
-import { RevenueAreaChart, OrdersBarChart } from './AnimatedCharts';
+import { WeeklySalesBarChart, RevenueMinimalBarChart } from './AnimatedCharts';
 import { 
   seedUsers, 
   User, 
@@ -475,7 +475,8 @@ export default function AssetFlowApp() {
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F4F5F7] text-slate-800 font-sans selection:bg-orange-500/30 overflow-x-hidden relative">
+    <div className="flex flex-col min-h-screen bg-slate-200 text-slate-800 font-sans selection:bg-orange-500/30 overflow-x-hidden relative p-2 md:p-6 lg:p-10">
+  <div className="flex flex-col flex-1 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden relative">
       
       {/* Real-time Notification Toast Alert */}
       {toast && (
@@ -495,7 +496,7 @@ export default function AssetFlowApp() {
 
       
       {/* Top Navigation */}
-      <header className="h-20 bg-white/70 backdrop-blur-xl border-b border-white/50 px-6 flex items-center justify-between z-30 sticky top-0 shadow-[0_4px_30px_rgb(0,0,0,0.03)]">
+      <header className="h-24 bg-transparent px-10 pt-6 flex items-center justify-between z-30 sticky top-0">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-orange-500/20">
@@ -631,165 +632,196 @@ export default function AssetFlowApp() {
 
       {/* Main Workspace Panel */}
       <main className="flex-1 relative w-full overflow-y-auto">
-        <Background3D />
+        
         <div className="p-8 max-w-[1600px] w-full mx-auto min-h-screen relative z-10">
 
           <AnimatePresence mode="wait">
-          {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <motion.div 
               key="dashboard"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5, staggerChildren: 0.1 }}
-              className="space-y-8"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.1 }}
+              className="h-full relative"
             >
-              <motion.div className="flex items-center justify-between" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <div>
-                  <h2 className="text-4xl font-light tracking-tight text-slate-900">System Overview</h2>
-                  <p className="text-sm text-slate-500 mt-2 font-medium">Track inventory and make faster stock decisions in real-time.</p>
-                </div>
-                <div className="flex gap-4">
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setAllocateModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 font-bold text-xs text-white rounded-xl shadow-[0_10px_20px_rgba(249,115,22,0.3)] transition-colors"
-                  >
-                    <ArrowRightLeft size={16} />
-                    Allocate Asset
-                  </motion.button>
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setRegisterModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm font-bold text-xs text-slate-800 rounded-xl transition-colors"
-                  >
-                    <Plus size={16} />
-                    Register Asset
-                  </motion.button>
-                </div>
-              </motion.div>
-
-              {/* KPI Ribbon */}
-              <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-6" variants={{ show: { transition: { staggerChildren: 0.1 } } }}>
+              <div className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]">
+                <Background3D />
+              </div>
+              
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 h-full max-w-[1600px] mx-auto pt-4">
                 
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -5, boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)' }}
-                  className="p-6 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg space-y-2 cursor-pointer transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <p className="text-xs text-slate-500 font-bold">Total Orders</p>
-                    <ArrowUpRight size={16} className="text-slate-400" />
-                  </div>
-                  <div className="flex items-end gap-3 pt-2">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500"><FolderTree size={16}/></div>
-                    <span className="text-4xl font-light">{assets.length * 12}</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-2">Lifetime</p>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -5, boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)' }}
-                  className="p-6 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg space-y-2 cursor-pointer transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <p className="text-xs text-slate-500 font-bold">Inventory Value</p>
-                    <ArrowUpRight size={16} className="text-slate-400" />
-                  </div>
-                  <div className="flex items-end gap-3 pt-2">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500"><ShieldCheck size={16}/></div>
-                    <span className="text-4xl font-light">$45.5K</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-2">Current Stock</p>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -5, boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)' }}
-                  className="p-6 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg space-y-2 cursor-pointer transition-all lg:col-span-2"
-                >
-                   <div className="flex justify-between items-start mb-4">
-                    <p className="text-xs text-slate-500 font-bold">Total Revenue</p>
-                    <ArrowUpRight size={16} className="text-slate-400" />
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <div className="flex-1">
-                      <OrdersBarChart />
-                    </div>
-                    <div className="w-32">
-                      <span className="text-3xl font-light block">$24,475.00</span>
-                      <span className="text-[10px] text-slate-400">Mar, 2026</span>
-                    </div>
-                  </div>
-                </motion.div>
-                
-              </motion.div>
-
-              {/* Grid Content */}
-              <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
-                
-                {/* Revenue Chart Area */}
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-                  className="lg:col-span-2 p-8 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg space-y-6"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-bold text-sm text-slate-800">Weekly Sales</h3>
-                      <p className="text-4xl font-light mt-2">$12.5M</p>
-                    </div>
-                    <CalendarDays size={20} className="text-slate-400" />
-                  </div>
-                  <RevenueAreaChart />
-                </motion.div>
-
-                <div className="space-y-8">
-                  {/* Alerts Panel */}
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-                    className="p-8 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-bold text-sm text-slate-800">Alerts</h3>
-                      <ArrowUpRight size={16} className="text-slate-400" />
-                    </div>
-                    <p className="text-4xl font-light mb-8">145</p>
-                    
-                    <div className="relative w-full h-24 overflow-hidden rounded-xl border border-slate-200">
-                       {/* Abstract gauge representation */}
-                       <div className="absolute bottom-0 w-full h-[200%] rounded-full border-[20px] border-orange-100" />
-                       <motion.div 
-                         initial={{ rotate: -90 }} animate={{ rotate: 0 }} transition={{ type: "spring", duration: 2, delay: 0.5 }}
-                         className="absolute bottom-0 w-full h-[200%] rounded-full border-[20px] border-orange-500 border-l-transparent border-t-transparent origin-bottom" 
-                       />
-                       <div className="absolute bottom-2 w-full text-center text-xs font-bold text-slate-800">Warning</div>
-                    </div>
+                {/* LEFT COLUMN: Overview, Orders, Inventory */}
+                <div className="lg:col-span-4 space-y-12">
+                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+                    <h2 className="text-6xl font-thin tracking-tight text-slate-900 mb-2">Overview</h2>
+                    <p className="text-sm text-slate-500 font-medium">Track inventory and <span className="font-bold text-slate-800">make faster stock decisions</span></p>
                   </motion.div>
 
-                  {/* Campaigns Panel */}
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
-                    className="p-8 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg"
-                  >
-                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-bold text-sm text-slate-800">Campaigns</h3>
-                      <ArrowUpRight size={16} className="text-slate-400" />
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <p className="text-4xl font-light">14 <span className="text-xs font-bold text-slate-400">Campaign</span></p>
-                      <div className="text-right">
-                         <div className="w-16 h-1 bg-slate-200 rounded-full mb-1"><div className="w-10 h-1 bg-orange-500 rounded-full" /></div>
-                         <p className="text-[10px] text-slate-500">Active <span className="font-bold text-slate-800">10</span></p>
+                  <div className="space-y-6 pt-10">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="p-6 rounded-3xl bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] cursor-pointer w-[80%]"
+                    >
+                      <div className="flex justify-between items-start mb-6">
+                        <p className="text-sm text-slate-700 font-bold">Total Orders</p>
+                        <ArrowUpRight size={16} className="text-slate-400" />
                       </div>
-                    </div>
-                  </motion.div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-inner">
+                           <FolderTree size={20}/>
+                        </div>
+                        <div>
+                          <p className="text-3xl font-light text-slate-900">24,744</p>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-1">Lifetime</p>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="p-6 rounded-3xl bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] cursor-pointer w-[80%]"
+                    >
+                      <div className="flex justify-between items-start mb-6">
+                        <p className="text-sm text-slate-700 font-bold">Inventory Value</p>
+                        <ArrowUpRight size={16} className="text-slate-400" />
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-inner">
+                           <ShieldCheck size={20}/>
+                        </div>
+                        <div>
+                          <p className="text-3xl font-light text-slate-900">$45.5K</p>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-1">Current Stock</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
-              </motion.div>
+
+                {/* RIGHT COLUMN: The Floating Total Revenue Card */}
+                <div className="lg:col-span-8 relative">
+                   <motion.div 
+                      initial={{ opacity: 0, scale: 0.9, rotate: 2 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ delay: 0.5, type: 'spring' }}
+                      className="absolute right-10 top-40 p-6 rounded-3xl bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgb(0,0,0,0.08)] border border-slate-100 w-80 z-20"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <p className="text-sm text-slate-700 font-bold">Total Revenue</p>
+                        <ArrowUpRight size={16} className="text-slate-400" />
+                      </div>
+                      <div className="mb-4">
+                        <RevenueMinimalBarChart />
+                      </div>
+                      <p className="text-3xl font-light text-slate-900">$24,475.00</p>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-1">Mar, 2026</p>
+                   </motion.div>
+                </div>
+              </div>
+
+              {/* BOTTOM ROW */}
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12 pb-10 max-w-[1600px] mx-auto">
+                 {/* Weekly Sales */}
+                 <motion.div 
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                    className="lg:col-span-5 p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] flex flex-col"
+                 >
+                    <div className="flex justify-between items-start mb-8">
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-800">Weekly Sales</h3>
+                        <p className="text-4xl font-light mt-4 text-slate-900">$12.5M</p>
+                      </div>
+                      <CalendarDays size={20} className="text-slate-400" />
+                    </div>
+                    <div className="flex-1 w-full min-h-[200px]">
+                      <WeeklySalesBarChart />
+                    </div>
+                 </motion.div>
+
+                 {/* Alerts & Campaigns */}
+                 <div className="lg:col-span-3 space-y-8 flex flex-col">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+                      className="p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)] flex-1 relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-bold text-sm text-slate-800">Alerts</h3>
+                        <ArrowUpRight size={16} className="text-slate-400" />
+                      </div>
+                      <p className="text-4xl font-light text-slate-900">145</p>
+                      
+                      {/* Half Gauge Design */}
+                      <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-48 h-48">
+                         <div className="w-full h-full rounded-full border-[2px] border-dashed border-orange-200 border-b-transparent border-r-transparent rotate-45"></div>
+                         <motion.div 
+                           initial={{ rotate: -90 }} animate={{ rotate: 10 }} transition={{ type: "spring", duration: 2, delay: 0.8 }}
+                           className="absolute top-0 left-0 w-full h-full rounded-full border-[3px] border-orange-500 border-b-transparent border-r-transparent border-l-transparent rotate-45 origin-center"
+                         >
+                            <div className="absolute top-2 left-[50%] transform -translate-x-1/2 -mt-4 text-orange-500">
+                               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 16L6 8H18L12 16Z"/></svg>
+                            </div>
+                         </motion.div>
+                         <div className="absolute bottom-16 w-full text-center text-xs font-bold text-slate-800">Warning</div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+                      className="p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)]"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="font-bold text-sm text-slate-800">Campaigns</h3>
+                        <ArrowUpRight size={16} className="text-slate-400" />
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <p className="text-4xl font-light text-slate-900">14 <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">Campaign</span></p>
+                        <div className="text-right w-24">
+                           <div className="w-full h-1.5 bg-slate-100 rounded-full mb-2"><div className="w-[65%] h-1.5 bg-orange-500 rounded-full" /></div>
+                           <p className="text-[10px] text-slate-400">Active <span className="font-bold text-slate-800 ml-1">10</span></p>
+                        </div>
+                      </div>
+                    </motion.div>
+                 </div>
+
+                 {/* Best Selling Products / Active Assets */}
+                 <motion.div 
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+                    className="lg:col-span-4 p-8 rounded-[2rem] bg-white shadow-[0_10px_40px_rgb(0,0,0,0.04)]"
+                 >
+                    <div className="flex justify-between items-start mb-8">
+                      <h3 className="font-bold text-sm text-slate-800">Most Active Assets</h3>
+                      <ArrowUpRight size={16} className="text-slate-400" />
+                    </div>
+                    <div className="space-y-6">
+                      {[
+                        { name: 'MacBook Pro 16"', detail: '32 units allocated', count: '1,245 Uses', icon: '💻' },
+                        { name: 'Herman Miller Chair', detail: '14 units allocated', count: '854 Uses', icon: '🪑' },
+                        { name: 'Dell UltraSharp 4K', detail: '45 units allocated', count: '632 Uses', icon: '🖥️' },
+                        { name: 'Sony A7S III Camera', detail: '2 units allocated', count: '154 Uses', icon: '📷' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-4 group cursor-pointer">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-xl group-hover:bg-orange-50 transition-colors">
+                            {item.icon}
+                          </div>
+                          <div className="flex-1 border-b border-slate-100 pb-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-800">{item.name}</h4>
+                                <p className="text-[10px] text-slate-400 mt-1">{item.detail}</p>
+                              </div>
+                              <span className="text-xs font-semibold text-slate-500">{item.count}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                 </motion.div>
+              </div>
             </motion.div>
           )}
           </AnimatePresence>
-
+          
           {activeTab === 'assets' && (
             <div className="space-y-8 animate-in fade-in duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -2314,7 +2346,6 @@ export default function AssetFlowApp() {
       )}
 
     </div>
+    </div>
   );
 }
-
-// JSDoc: Main layout rendering and conflict UX modal coordination.
