@@ -7,3 +7,5 @@ export const redis =
         token: process.env.UPSTASH_REDIS_REST_TOKEN,
       })
     : null;
+
+// JSDoc: Redis connection utility for Upstash serverless client.
