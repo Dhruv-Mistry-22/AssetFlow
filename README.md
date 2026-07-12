@@ -202,3 +202,5 @@ graph TD
 ```
 
 <!-- Note: Environment variables are managed in .env for local testing -->
+
+<!-- Note: Deployed with serverless database configuration support -->
