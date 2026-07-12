@@ -17,7 +17,7 @@ import {
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import autoTable from 'jspdf-autotable';
 import {
   LayoutDashboard,
   Building2,
@@ -254,44 +254,106 @@ export default function AssetFlowApp() {
     showToast('Excel Exported', 'Department allocation summary report downloaded.', 'ALERT');
   };
 
-  // PDF Exporter for Reports Dashboard
-  const handleExportPDF = async () => {
-    const element = document.getElementById('reports-page-content');
-    if (!element) return;
-
-    showToast('Generating PDF', 'Compiling print-ready executive summary PDF...', 'ALERT');
-
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#020617' // Match bg-slate-950 color exactly
+  // PDF Exporter for Reports Dashboard using programmatic jspdf-autotable
+  const handleExportPDF = () => {
+    // Gather same department summary data
+    const summaryData = departments.map((d) => {
+      const deptAssets = assets.filter((a) => {
+        const activeAlloc = allocations.find((al) => al.assetId === a.id && al.status === 'ACTIVE');
+        return activeAlloc?.departmentId === d.id || 
+               (activeAlloc?.userId && users.find((u) => u.id === activeAlloc.userId)?.departmentId === d.id);
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 190; // A4 margins (10mm left/right)
-      const pageHeight = 277; // A4 margins (10mm top/bottom)
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10; // Top margin
+      const totalCost = deptAssets.reduce((sum, a) => sum + a.acquisitionCost, 0);
 
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      return {
+        name: d.name,
+        status: d.status,
+        head: d.headName || 'Not Assigned',
+        count: deptAssets.length,
+        cost: totalCost
+      };
+    });
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+    // Initialize jsPDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // Document Branding & Header
+    pdf.setFillColor(15, 23, 42); // bg-slate-900 (#0f172a)
+    pdf.rect(0, 0, 210, 40, 'F');
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(22);
+    pdf.text('AssetFlow ERP System', 14, 18);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text('EXECUTIVE REPORTS CENTER', 14, 25);
+    pdf.text(`Date Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+    // Report Metadata Title
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.text('Department Asset Allocation Summary', 14, 52);
+
+    // Draw a thin accent line
+    pdf.setDrawColor(226, 232, 240); // border-slate-200
+    pdf.line(14, 55, 196, 55);
+
+    // Draw the vector Table using jspdf-autotable
+    const tableHeaders = [['Department Name', 'Status', 'Head of Department', 'Allocated Assets Count', 'Total Cost of Assets']];
+    const tableRows = summaryData.map(d => [
+      d.name,
+      d.status,
+      d.head,
+      d.count.toString(),
+      `$${d.cost.toLocaleString()}`
+    ]);
+
+    // Add summary row
+    const totalCount = summaryData.reduce((sum, d) => sum + d.count, 0);
+    const totalCostSum = summaryData.reduce((sum, d) => sum + d.cost, 0);
+    tableRows.push([
+      'TOTAL SUMMARY',
+      '-',
+      '-',
+      totalCount.toString(),
+      `$${totalCostSum.toLocaleString()}`
+    ]);
+
+    autoTable(pdf, {
+      startY: 60,
+      head: tableHeaders,
+      body: tableRows,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        3: { halign: 'right' }, // count
+        4: { halign: 'right' }  // cost
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4
+      },
+      didParseCell: (data: any) => {
+        // Highlight totals row
+        if (data.row.index === tableRows.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [241, 245, 249]; // bg-slate-100
+        }
       }
+    });
 
-      pdf.save('AssetFlow_Reports_Executive_Summary.pdf');
-      showToast('PDF Exported', 'Executive summary report downloaded successfully.', 'ALERT');
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      showToast('Export Failed', 'An error occurred during PDF generation.', 'ALERT');
-    }
+    // Save the document
+    pdf.save('AssetFlow_Department_Allocation_Summary.pdf');
+    showToast('PDF Exported', 'Department allocation summary report downloaded.', 'ALERT');
   };
 
   // Switch demo roles
