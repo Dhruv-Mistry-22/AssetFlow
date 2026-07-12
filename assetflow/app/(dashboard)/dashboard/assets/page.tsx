@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ExportAssetsButton } from "@/components/assets/export-assets-button";
@@ -38,69 +37,87 @@ export default async function AssetsDirectoryPage({ searchParams }: { searchPara
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center">
-            <Package className="mr-3 h-8 w-8 text-primary" />
-            Asset Directory
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Asset directory
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage, search, and register all organizational assets.
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage, search, and register organizational assets.
           </p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex space-x-2">
           <ExportAssetsButton assets={assets} />
           <RegisterAssetModal categories={categories} />
+          <Button asChild>
+            <a href="/dashboard/allocations/new">Allocate asset</a>
+          </Button>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center space-x-2">
-        <SearchInput placeholder="Search by tag, name, or serial number..." />
-        <Button variant="outline" className="border-white/10 bg-background/50">
-          <Filter className="mr-2 h-4 w-4" /> Filters
+        <div className="w-full max-w-sm">
+          <SearchInput placeholder="Search by tag, name, or serial number" />
+        </div>
+        <Button variant="outline">
+          Filters
         </Button>
       </div>
 
-      {/* Glassmorphic Table */}
-      <div className="glass-card rounded-xl border border-white/5 overflow-hidden">
+      {/* Data Table */}
+      <div className="rounded-md border bg-card">
         <Table>
-          <TableHeader className="bg-black/20">
-            <TableRow className="border-white/5 hover:bg-transparent">
-              <TableHead className="font-semibold text-zinc-300">Asset Tag</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Name</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Category</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Status</TableHead>
-              <TableHead className="font-semibold text-zinc-300 hidden md:table-cell">Location</TableHead>
-              <TableHead className="font-semibold text-zinc-300 text-right">Added</TableHead>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px]">Asset tag</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell">Location</TableHead>
+              <TableHead className="text-right">Added date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {assets.length === 0 ? (
-              <TableRow className="border-white/5">
-                <TableCell colSpan={6} className="text-center h-32 text-muted-foreground">
-                  No assets found. Register one above to get started.
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <p className="font-medium text-foreground">No assets found</p>
+                    <p className="text-sm text-muted-foreground">
+                      We couldn't find any assets matching your search criteria. Register a new asset to get started.
+                    </p>
+                    <div className="mt-2">
+                      <RegisterAssetModal categories={categories} />
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               assets.map((asset) => (
-                <TableRow key={asset.id} className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
-                  <TableCell className="font-mono text-primary font-medium flex items-center gap-2">
-                    {asset.assetTag}
-                    <QrCodeButton assetTag={asset.assetTag} assetName={asset.name} />
+                <TableRow key={asset.id} className="cursor-pointer">
+                  <TableCell className="font-mono text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      {asset.assetTag}
+                      <QrCodeButton assetTag={asset.assetTag} assetName={asset.name} />
+                    </div>
                   </TableCell>
-                  <TableCell className="font-medium text-white">{asset.name}</TableCell>
+                  <TableCell className="font-medium">{asset.name}</TableCell>
                   <TableCell className="text-muted-foreground">{asset.category.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={
-                      asset.status === "AVAILABLE" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                      asset.status === "ALLOCATED" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                      asset.status === "UNDER_MAINTENANCE" ? "bg-orange-500/10 text-orange-500 border-orange-500/20" :
-                      "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
-                    }>
-                      {asset.status.replace("_", " ")}
+                    <Badge 
+                      variant="outline" 
+                      className={
+                        asset.status === "AVAILABLE" ? "bg-status-available/10 text-status-available border-status-available/20" :
+                        asset.status === "ALLOCATED" ? "bg-status-allocated/10 text-status-allocated border-status-allocated/20" :
+                        asset.status === "UNDER_MAINTENANCE" ? "bg-status-maintenance/10 text-status-maintenance border-status-maintenance/20" :
+                        asset.status === "LOST" ? "bg-status-lost/10 text-status-lost border-status-lost/20" :
+                        "bg-status-retired/10 text-status-retired border-status-retired/20"
+                      }
+                    >
+                      {asset.status === "UNDER_MAINTENANCE" ? "Maintenance" : asset.status.charAt(0) + asset.status.slice(1).toLowerCase().replace("_", " ")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden md:table-cell">{asset.location || "N/A"}</TableCell>

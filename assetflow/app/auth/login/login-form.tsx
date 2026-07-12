@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Fingerprint, Lock, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ export function LoginForm() {
       email: "",
       password: "",
     },
+    mode: "onChange",
   });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -46,87 +47,68 @@ export function LoginForm() {
       });
 
       if (response?.error) {
-        toast.error("Authentication Failed", {
-          description: "Invalid email or password. Please try again.",
+        toast.error("Authentication failed", {
+          description: "The email or password you entered is incorrect.",
         });
         setIsLoading(false);
         return;
       }
 
-      toast.success("Welcome back!", {
-        description: "Successfully authenticated to AssetFlow.",
-      });
-
       router.push(callbackUrl);
       router.refresh();
     } catch (error) {
-      toast.error("System Error", {
+      toast.error("System error", {
         description: "An unexpected error occurred. Please contact IT.",
       });
       setIsLoading(false);
     }
   };
 
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/50" />
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@company.com"
-              className="pl-10 bg-background/50 border-white/10 focus:border-primary/50 transition-colors"
-              disabled={isLoading}
-              {...form.register("email")}
-            />
-          </div>
-          {form.formState.errors.email && (
-            <p className="text-sm text-destructive font-medium">
-              {form.formState.errors.email.message}
-            </p>
-          )}
-        </div>
+  const isFormValid = form.formState.isValid;
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-muted-foreground">Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/50" />
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              className="pl-10 bg-background/50 border-white/10 focus:border-primary/50 transition-colors"
-              disabled={isLoading}
-              {...form.register("password")}
-            />
-          </div>
-          {form.formState.errors.password && (
-            <p className="text-sm text-destructive font-medium">
-              {form.formState.errors.password.message}
-            </p>
-          )}
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email address</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="name@company.com"
+          disabled={isLoading}
+          {...form.register("email")}
+        />
+        {form.formState.errors.email && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.email.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
         </div>
+        <Input
+          id="password"
+          type="password"
+          disabled={isLoading}
+          {...form.register("password")}
+        />
+        {form.formState.errors.password && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.password.message}
+          </p>
+        )}
       </div>
 
       <Button 
         type="submit" 
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 group"
-        disabled={isLoading}
+        className="w-full"
+        disabled={isLoading || !isFormValid}
       >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Fingerprint className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-        )}
-        {isLoading ? "Authenticating..." : "Secure Login"}
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? "Signing in..." : "Sign in"}
       </Button>
-      
-      <div className="text-center text-sm text-muted-foreground mt-4">
-        Don't have an account? <span className="text-primary hover:underline cursor-pointer">Contact your Admin</span>
-      </div>
     </form>
   );
 }

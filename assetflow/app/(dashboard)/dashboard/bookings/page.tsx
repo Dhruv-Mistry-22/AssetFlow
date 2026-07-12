@@ -9,8 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarClock, Search, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
+
+export const metadata = {
+  title: "Bookings - AssetFlow",
+};
 
 export default async function BookingsPage() {
   const bookings = await db.booking.findMany({
@@ -27,84 +31,91 @@ export default async function BookingsPage() {
     orderBy: { name: "asc" },
   });
 
+  // Fetch all upcoming bookings for the live overlap validation in the modal
+  const upcomingBookings = await db.booking.findMany({
+    where: { status: { in: ["UPCOMING", "ONGOING"] } },
+    select: {
+      assetId: true,
+      startTime: true,
+      endTime: true,
+    }
+  });
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center">
-            <CalendarClock className="mr-3 h-8 w-8 text-emerald-500" />
-            Resource Bookings
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Resource bookings
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Schedule conference rooms, projectors, and other bookable assets.
           </p>
         </div>
         <div>
-          <BookAssetModal assets={bookableAssets} />
+          <BookAssetModal 
+            assets={bookableAssets} 
+            existingBookings={upcomingBookings} 
+          />
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search bookings by asset or person..."
-            className="pl-9 bg-background/50 border-white/10 focus-visible:ring-emerald-500/50"
-          />
+        <div className="w-full max-w-sm">
+          <SearchInput placeholder="Search bookings by asset or person" />
         </div>
       </div>
 
-      {/* Glassmorphic Table */}
-      <div className="glass-card rounded-xl border border-white/5 overflow-hidden">
+      {/* Data Table */}
+      <div className="rounded-md border bg-card">
         <Table>
-          <TableHeader className="bg-black/20">
-            <TableRow className="border-white/5 hover:bg-transparent">
-              <TableHead className="font-semibold text-zinc-300">Asset</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Booked By</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Start Time</TableHead>
-              <TableHead className="font-semibold text-zinc-300">End Time</TableHead>
-              <TableHead className="font-semibold text-zinc-300">Status</TableHead>
-              <TableHead className="font-semibold text-zinc-300 hidden md:table-cell text-right">Purpose</TableHead>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Asset</TableHead>
+              <TableHead>Booked by</TableHead>
+              <TableHead>Start time</TableHead>
+              <TableHead>End time</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell text-right">Purpose</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {bookings.length === 0 ? (
-              <TableRow className="border-white/5">
-                <TableCell colSpan={6} className="text-center h-32 text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center">
-                    <AlertCircle className="h-8 w-8 text-muted-foreground mb-2 opacity-50" />
-                    No bookings found.
-                  </div>
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <p className="font-medium">No bookings found</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    There are no resource bookings yet. Create one to get started.
+                  </p>
                 </TableCell>
               </TableRow>
             ) : (
               bookings.map((booking) => (
-                <TableRow key={booking.id} className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
-                  <TableCell className="font-medium text-white">
+                <TableRow key={booking.id} className="cursor-pointer">
+                  <TableCell className="font-medium">
                     {booking.asset.assetTag} - {booking.asset.name}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{booking.employee.name}</TableCell>
-                  <TableCell className="text-zinc-300">
+                  <TableCell>
                     {new Date(booking.startTime).toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-zinc-300">
+                  <TableCell>
                     {new Date(booking.endTime).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={
-                      booking.status === "UPCOMING" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                      booking.status === "ONGOING" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                      booking.status === "CANCELLED" ? "bg-destructive/10 text-destructive border-destructive/20" :
-                      "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                      booking.status === "UPCOMING" ? "bg-status-allocated/10 text-status-allocated border-status-allocated/20" :
+                      booking.status === "ONGOING" ? "bg-status-available/10 text-status-available border-status-available/20" :
+                      booking.status === "CANCELLED" ? "bg-status-lost/10 text-status-lost border-status-lost/20" :
+                      "bg-status-retired/10 text-status-retired border-status-retired/20"
                     }>
-                      {booking.status}
+                      {booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground hidden md:table-cell text-right italic">
-                    {booking.purpose || "-"}
+                  <TableCell className="text-muted-foreground hidden md:table-cell text-right">
+                    {booking.purpose || "—"}
                   </TableCell>
                 </TableRow>
               ))
