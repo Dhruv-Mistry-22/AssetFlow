@@ -1,0 +1,528 @@
+// AssetFlow: Complete Prisma Schema
+// Production-grade enterprise asset management system
+// Generator and datasource configuration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER & AUTHENTICATION
+// ============================================================================
+
+enum UserRole {
+  ADMIN           // Full system access, manage departments/categories/employees
+  ASSET_MANAGER   // Register, allocate, transfer assets
+  DEPARTMENT_HEAD // Manage department assets, approve transfers within dept
+  EMPLOYEE        // View own allocations, book resources, raise requests
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String
+  passwordHash      String
+  role              UserRole @default(EMPLOYEE)
+  department        String?  // "IT", "HR", "Finance"
+  status            UserStatus @default(ACTIVE)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  allocations       Allocation[]
+  bookings          Booking[]
+  maintenanceRequests MaintenanceRequest[]
+  transferRequests  TransferRequest[]        // Transfers this user requested
+  transferApprovals TransferRequest[]        // Transfers this user approved @relation("approver")
+  auditCycles       AuditCycle[]             // Audits this user created
+  auditItems        AuditItem[]              // Audit items this user verified
+  notifications     Notification[]
+  activityLogs      ActivityLog[]
+  assetHistory      AssetStateHistory[]      // Who changed asset state
+
+  @@index([role])
+  @@index([department])
+  @@index([status])
+}
+
+// ============================================================================
+// ASSETS & INVENTORY
+// ============================================================================
+
+enum AssetStatus {
+  AVAILABLE          // Ready to allocate
+  ALLOCATED          // Currently held by someone
+  RESERVED           // Booked/pending allocation
+  UNDER_MAINTENANCE  // Being repaired
+  LOST               // Reported missing
+  RETIRED            // End-of-life, kept for records
+  DISPOSED           // Scrapped/decommissioned
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+}
+
+model AssetCategory {
+  id               String   @id @default(cuid())
+  name             String   @unique  // "Laptop", "Desk", "Vehicle", "Conference Room"
+  description      String?
+  customFields     String?  // JSON: warranty period, maintenance schedule, etc.
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  assets           Asset[]
+
+  @@index([name])
+}
+
+model Asset {
+  id                String       @id @default(cuid())
+  assetTag          String       @unique  // AF-0001, AF-0002, etc. (auto-generated)
+  name              String
+  categoryId        String
+  category          AssetCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  serialNumber      String
+  status            AssetStatus  @default(AVAILABLE)
+  condition         AssetCondition @default(GOOD)
+  location          String?      // "Building A, Floor 2, Cubicle 12"
+  photoUrl          String?      // URL to asset photo
+  acquisitionDate   DateTime
+  acquisitionCost   Float        // For reporting, not GL integration
+  warrantyExpiry    DateTime?
+  nextServiceDate   DateTime?    // For maintenance scheduling
+  isBookable        Boolean      @default(false)  // Can this be booked (room, vehicle)?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  allocations       Allocation[]
+  bookings          Booking[]
+  maintenanceRequests MaintenanceRequest[]
+  stateHistory      AssetStateHistory[]
+  auditItems        AuditItem[]
+
+  @@index([assetTag])
+  @@index([status])
+  @@index([categoryId])
+  @@index([location])
+  @@index([isBookable])
+}
+
+// ============================================================================
+// ASSET ALLOCATION & TRANSFERS
+// ============================================================================
+
+enum AllocationStatus {
+  ACTIVE    // Currently allocated
+  RETURNED  // User returned it
+  PAUSED    // Temporarily paused (e.g., asset under maintenance)
+  CANCELLED // Transfer request cancelled
+}
+
+model Allocation {
+  id                    String            @id @default(cuid())
+  assetId               String
+  asset                 Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  employeeId            String
+  employee              User              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  department            String?           // Snapshot: allocated to which dept
+  expectedReturnDate    DateTime?         // When should this asset come back?
+  status                AllocationStatus  @default(ACTIVE)
+  notes                 String?           // Allocation notes
+  
+  allocatedAt           DateTime          @default(now())
+  returnedAt            DateTime?
+  returnCondition       AssetCondition?   // Condition when returned
+  returnNotes           String?           // Notes on return (scratches, etc)
+  updatedAt             DateTime          @updatedAt
+
+  // Constraints: Ensure only ONE active allocation per asset at any time
+  // UNIQUE constraint handled at migration level
+
+  // Relations
+  transferRequestsFrom TransferRequest[]   // Transfer requests for this allocation
+
+  @@index([status])
+  @@index([assetId])
+  @@index([employeeId])
+  @@index([department])
+  @@index([expectedReturnDate])
+  @@unique([assetId, status], where: { status: "ACTIVE" })  // CRITICAL: One active per asset
+}
+
+enum TransferRequestStatus {
+  PENDING   // Waiting for current holder approval
+  APPROVED  // Current holder approved
+  REJECTED  // Current holder rejected
+  COMPLETED // Transfer completed
+  CANCELLED // Requester cancelled
+}
+
+model TransferRequest {
+  id                    String                  @id @default(cuid())
+  allocationId          String                  // Asset held by current holder
+  allocation            Allocation              @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+  
+  requestedByUserId     String                  // Who wants the asset
+  requestedByUser       User                    @relation(fields: [requestedByUserId], references: [id], onDelete: Cascade)
+  
+  approvedByUserId      String?                 // Who approved (usually current holder)
+  approvedByUser        User?                   @relation("approver", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  
+  status                TransferRequestStatus   @default(PENDING)
+  reason                String?                 // Why do they want it?
+  createdAt             DateTime                @default(now())
+  approvedAt            DateTime?
+  completedAt           DateTime?
+
+  @@index([allocationId])
+  @@index([requestedByUserId])
+  @@index([status])
+}
+
+// ============================================================================
+// RESOURCE BOOKING (Rooms, Vehicles, Equipment)
+// ============================================================================
+
+enum BookingStatus {
+  UPCOMING   // Scheduled for future
+  ONGOING    // Currently happening (current time between start/end)
+  COMPLETED  // Finished
+  CANCELLED  // User cancelled
+  NO_SHOW    // Booked but user didn't show up
+}
+
+model Booking {
+  id                String       @id @default(cuid())
+  assetId           String       // The room/vehicle/equipment being booked
+  asset             Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  employeeId        String
+  employee          User         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  startTime         DateTime     // UTC timestamp
+  endTime           DateTime     // UTC timestamp (must be > startTime)
+  status            BookingStatus @default(UPCOMING)
+  purpose           String?      // "Team standup", "Quarterly review", etc.
+  location          String?      // For bookings, where (building/floor)
+  
+  reminderSentAt    DateTime?    // When was the 15-min before reminder sent?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Validation: endTime > startTime (handled in API)
+
+  @@index([assetId, startTime, endTime, status])  // Critical for overlap detection
+  @@index([employeeId])
+  @@index([status])
+  @@index([startTime])
+}
+
+// ============================================================================
+// MAINTENANCE MANAGEMENT
+// ============================================================================
+
+enum MaintenanceRequestStatus {
+  PENDING    // Waiting for Asset Manager approval
+  APPROVED   // Asset Manager approved, ready for work
+  REJECTED   // Asset Manager rejected
+  IN_PROGRESS // Technician is working on it
+  COMPLETED  // Fixed, ready to return to service
+  CANCELLED  // Cancelled before completion
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL  // Asset unusable, urgent
+}
+
+model MaintenanceRequest {
+  id                String                    @id @default(cuid())
+  assetId           String
+  asset             Asset                     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  requestedByUserId String
+  requestedByUser   User                      @relation(fields: [requestedByUserId], references: [id], onDelete: Cascade)
+  
+  priority          MaintenancePriority       @default(MEDIUM)
+  description       String                    // What's wrong?
+  photoUrl          String?                   // Photo of damage
+  status            MaintenanceRequestStatus  @default(PENDING)
+  
+  approvedAt        DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  resolutionNotes   String?                   // How was it fixed?
+  
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([assetId])
+  @@index([status])
+  @@index([priority])
+  @@index([requestedByUserId])
+}
+
+// ============================================================================
+// ASSET AUDIT CYCLES
+// ============================================================================
+
+enum AuditCycleStatus {
+  CREATED    // Just created, not started
+  IN_PROGRESS // Auditors are verifying assets
+  CLOSED     // Audit complete, discrepancies locked
+}
+
+enum AuditItemStatus {
+  VERIFIED   // Auditor confirmed asset exists and matches records
+  MISSING    // Asset not found during audit
+  DAMAGED    // Asset found but damaged
+  MISLOCATED // Found elsewhere than recorded location
+}
+
+model AuditCycle {
+  id                String            @id @default(cuid())
+  cycleNumber       String            @unique  // AC-2024-001, AC-2024-002
+  scope             String            // "Building A", "IT Department", etc.
+  status            AuditCycleStatus  @default(CREATED)
+  
+  createdByUserId   String
+  createdByUser     User              @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  
+  startDate         DateTime
+  endDate           DateTime
+  completedAt       DateTime?
+  
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  auditItems        AuditItem[]
+  discrepancies     AuditDiscrepancy[]
+
+  @@index([status])
+  @@index([createdByUserId])
+}
+
+model AuditItem {
+  id                String            @id @default(cuid())
+  auditCycleId      String
+  auditCycle        AuditCycle        @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  
+  assetId           String
+  asset             Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  verifiedByUserId  String
+  verifiedByUser    User              @relation(fields: [verifiedByUserId], references: [id], onDelete: Restrict)
+  
+  status            AuditItemStatus   @default(VERIFIED)
+  foundLocation     String?           // Where it was actually found (if different)
+  notes             String?           // Auditor notes
+  photoUrl          String?           // Photo if damaged
+  verifiedAt        DateTime          @default(now())
+
+  @@index([auditCycleId])
+  @@index([assetId])
+  @@index([status])
+  @@unique([auditCycleId, assetId])  // Each asset audited once per cycle
+}
+
+model AuditDiscrepancy {
+  id                String            @id @default(cuid())
+  auditCycleId      String
+  auditCycle        AuditCycle        @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  
+  assetId           String?           // Asset missing (null if lost entirely)
+  category          String            // "Missing", "Damaged", "Mislocated", "Condition_Mismatch"
+  severity          String            // "Low", "Medium", "High"
+  description       String
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([auditCycleId])
+  @@index([category])
+}
+
+// ============================================================================
+// AUDIT TRAIL & HISTORY
+// ============================================================================
+
+model AssetStateHistory {
+  id                String    @id @default(cuid())
+  assetId           String
+  asset             Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  fromStatus        String    // "Available" (stored as string for flexibility)
+  toStatus          String    // "Allocated"
+  reason            String?   // "Employee allocation", "Maintenance completion"
+  changedByUserId   String
+  changedByUser     User      @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+  
+  changedAt         DateTime  @default(now())
+
+  @@index([assetId])
+  @@index([changedAt])
+  @@index([changedByUserId])
+}
+
+model ActivityLog {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action            String    // "ASSET_REGISTERED", "ASSET_ALLOCATED", "BOOKING_CREATED"
+  resourceType      String    // "Asset", "Booking", "Allocation"
+  resourceId        String    // ID of affected resource
+  
+  details           String?   // JSON: {assetTag: "AF-0001", allocatedTo: "Priya"}
+  ipAddress         String?
+  userAgent         String?
+  
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+enum NotificationType {
+  ASSET_ALLOCATED
+  ASSET_RETURNED
+  ASSET_OVERDUE
+  BOOKING_CONFIRMED
+  BOOKING_REMINDER
+  BOOKING_CANCELLED
+  MAINTENANCE_APPROVED
+  MAINTENANCE_REJECTED
+  MAINTENANCE_COMPLETED
+  TRANSFER_REQUESTED
+  TRANSFER_APPROVED
+  TRANSFER_REJECTED
+  AUDIT_ASSIGNED
+  AUDIT_COMPLETED
+}
+
+model Notification {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type              NotificationType
+  title             String
+  message           String
+  resourceType      String?           // "Asset", "Booking", "MaintenanceRequest"
+  resourceId        String?
+  
+  isRead            Boolean           @default(false)
+  readAt            DateTime?
+  createdAt         DateTime          @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// ORGANIZATION SETUP
+// ============================================================================
+
+model Department {
+  id                String    @id @default(cuid())
+  name              String    @unique  // "IT", "HR", "Finance"
+  parentDepartmentId String?   // For hierarchy (IT → IT-Infrastructure)
+  description       String?
+  headOfDepartmentId String?   // Foreign key to User (optional)
+  status            String    @default("ACTIVE")  // ACTIVE, INACTIVE
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status])
+}
+
+// ============================================================================
+// REPORTS & ANALYTICS (Denormalized for Performance)
+// ============================================================================
+
+model DailyAssetSnapshot {
+  id                String    @id @default(cuid())
+  date              DateTime  @db.Date
+  
+  totalAssets       Int
+  availableAssets   Int
+  allocatedAssets   Int
+  underMaintenance  Int
+  overdueReturns    Int
+  
+  createdAt         DateTime  @default(now())
+
+  @@index([date])
+  @@unique([date])  // One snapshot per day
+}
+
+// ============================================================================
+// SESSION MANAGEMENT (NextAuth.js)
+// ============================================================================
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
