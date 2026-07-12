@@ -8,6 +8,7 @@ import {
   paginatedResponse,
 } from "@/lib/auth-utils";
 import { createMaintenanceSchema } from "@/lib/schemas";
+import { sendCorporateChatAlert } from "@/lib/webhook";
 
 /**
  * GET /api/maintenance
@@ -104,6 +105,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+
+
     await db.activityLog.create({
       data: {
         userId: session!.user.id,
@@ -117,6 +120,21 @@ export async function POST(request: NextRequest) {
         }),
       },
     });
+
+    // Trigger webhook for CRITICAL or HIGH maintenance requests
+    if (priority === "CRITICAL" || priority === "HIGH") {
+      await sendCorporateChatAlert({
+        title: "URGENT: Maintenance Request Raised",
+        message: `A ${priority} priority maintenance request was raised for asset ${asset.assetTag} (${asset.name}).`,
+        priority: priority as "CRITICAL" | "HIGH",
+        details: {
+          "Asset Tag": asset.assetTag,
+          "Asset Name": asset.name,
+          "Description": description,
+          "Requested By": session!.user.name,
+        }
+      });
+    }
 
     return NextResponse.json(maintenanceRequest, { status: 201 });
   } catch (err) {

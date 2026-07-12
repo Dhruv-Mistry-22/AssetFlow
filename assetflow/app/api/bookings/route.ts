@@ -135,10 +135,47 @@ export async function POST(request: NextRequest) {
     );
 
     if (hasConflict) {
+      // AI Booking Recommendations Logic
+      const durationMs = endTime.getTime() - startTime.getTime();
+      
+      // 1. Suggest Alternative Time (right after the conflict ends)
+      const conflictEnd = new Date((conflict as any).endTime);
+      const suggestedEnd = new Date(conflictEnd.getTime() + durationMs);
+      
+      const { hasConflict: altTimeConflict } = await checkBookingConflict(
+        db, assetId, conflictEnd, suggestedEnd
+      );
+      
+      let alternativeTime = null;
+      if (!altTimeConflict) {
+        alternativeTime = { startTime: conflictEnd, endTime: suggestedEnd };
+      }
+      
+      // 2. Suggest Alternative Asset (same category, free right now)
+      const altAssets = await db.asset.findMany({
+        where: { categoryId: asset.categoryId, isBookable: true, id: { not: assetId }, status: "AVAILABLE" },
+        take: 5
+      });
+      
+      let alternativeAsset = null;
+      for (const altAsset of altAssets) {
+        const { hasConflict: altAssetConflict } = await checkBookingConflict(
+          db, altAsset.id, startTime, endTime
+        );
+        if (!altAssetConflict) {
+          alternativeAsset = { id: altAsset.id, name: altAsset.name, assetTag: altAsset.assetTag };
+          break;
+        }
+      }
+      
       return NextResponse.json(
         {
           error: "Time slot is already booked",
           conflictingBooking: conflict,
+          recommendations: {
+            alternativeTime,
+            alternativeAsset
+          },
           hint: "Adjacent bookings are allowed (e.g. 10:00 immediately after 9:00–10:00)",
         },
         { status: 409 }
