@@ -200,3 +200,5 @@ graph TD
     H --> I[Add Reports, KPI Dashboards & Activity Logs]
     I --> J[Polish, Add Micro-animations, Verify Responsiveness]
 ```
+
+<!-- Note: Environment variables are managed in .env for local testing -->
